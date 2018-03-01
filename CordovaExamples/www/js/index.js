@@ -23,6 +23,8 @@
 * under the License.
 */
 
+var BLUEDOT_THRESHOLD = 0.8;
+
 var app = {
   // Application Constructor
   initialize: function() {
@@ -61,6 +63,7 @@ var image;
 var venuemap;
 var wayfindingController;
 var lastFloor = 0;
+var latestFloorCertainty = 0;
 var groundOverlay = null;
 var blueDotVisible = false;
 var cordovaExample = {
@@ -88,6 +91,8 @@ var cordovaExample = {
   // Displays the current location of the user
   showLocation: function(position) {
     // Show a map centered at (position.coords.latitude, position.coords.longitude).
+    cordovaExample.getFloorCertainty();
+
     SpinnerPlugin.activityStop();
     try {
       var center = { lat: position.coords.latitude, lng: position.coords.longitude };
@@ -100,8 +105,11 @@ var cordovaExample = {
 
       accuracyCircle.setRadius(position.coords.accuracy);
       accuracyCircle.setCenter(center);
-
-      if (!blueDotVisible) {
+      if (latestFloorCertainty < BLUEDOT_THRESHOLD) {
+        accuracyCircle.setVisible(false);
+        marker.setVisible(false);
+        blueDotVisible = false;
+      } else if (!blueDotVisible && latestFloorCertainty >= BLUEDOT_THRESHOLD) {
         accuracyCircle.setVisible(true);
         marker.setVisible(true);
         blueDotVisible = true;
@@ -122,12 +130,14 @@ var cordovaExample = {
     }
     this.watchId = IndoorAtlas.watchPosition(this.showLocation, this.IAServiceFailed);
     cordovaExample.startRegionWatch();
+    cordovaExample.getTraceID();
   },
 
   getTraceID: function() {
     // onSuccess Callback
     function onSuccess(data) {
       console.log('TraceId is: '+ data.traceId);
+      document.getElementById('traceIdDiv').innerHTML = "TraceID: " + data.traceId;
     };
 
     // onError Callback receives an error object
@@ -137,6 +147,17 @@ var cordovaExample = {
     };
 
     IndoorAtlas.getTraceId(onSuccess, onError);
+  },
+
+  getFloorCertainty: function() {
+    function onSuccess(d) {
+      latestFloorCertainty = d.floorCertainty;
+      document.getElementById('floorCertaintyDiv').innerHTML = "Certainty: " + d.floorCertainty;
+    };
+    function onError(e) {
+      alert(e);
+    };
+    IndoorAtlas.getFloorCertainty(onSuccess, onError);
   },
 
   // Fetches the current location

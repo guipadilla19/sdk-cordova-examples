@@ -163,3 +163,17 @@ h1 {
     display:inline-block;
     line-height:1.2
 }
+
+.floorCertainty {
+  position:absolute;
+  z-index: 999;
+  top: 110px;
+  left: 10px;
+}
+
+.traceId {
+  position:absolute;
+  z-index: 999;
+  top: 125px;
+  left: 10px;
+}
